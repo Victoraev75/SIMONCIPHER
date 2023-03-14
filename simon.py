@@ -243,8 +243,8 @@ def simonear(texto,llave):
     printAscii(y)
     return x+y
 
-nonce = simonear("MatevickyForm123", "qwertyuiopasdfghjkl�zxcvbnmqwert")
-h = simonear("0000000000000000", "qwertyuiopasdfghjkl�zxcvbnmqwert")
+nonce = simonear("MatevickyForm123", "qwertyuiopasdfghjklñzxcvbnmqwert")
+h = simonear("0000000000000000", "qwertyuiopasdfghjklñzxcvbnmqwert")
 def joinList(l1):
     z=[]
     for i in range(len(l1)):
@@ -270,9 +270,17 @@ hBin = joinList(hBin)
 import numpy as np
 
 def MGF( A, B, P):
-  M = np.polymul(A,B)
-  q, r = np.polydiv(M, P)
-  return r % 2
+  M = np.polymul(A,B)       # Toma el producto de los polinomios  A x B
+  q, R = np.polydiv(M, P)   # Aplica el algoritmo de Euclides con modulo dado por el primitivo
+  r = [0] * len(P)          # Inicia una lista de ceros del tamaño del primitivo
+
+  i = 0
+  for a in R:               # Llena  la lista vacia con los coeficientes del polinomi
+    r[i] = int(a) % 2       # Binariza los coeficientes
+    i += 1                  # Itera cada elemento de la lista de ceros
+    
+  return r 
+
 
 def ext(arrIn, lenTarget):    
     tmp = []
@@ -337,6 +345,18 @@ for i in range(len(Ms)):
     MsGood.append(z)
 
 
-primitivo = [1,0,0,0,1,1,0,1,1]
+# Construimos el polinomio de reduccion: x^127 + x⁷ + x² + 1 
+primitivo = []
+nbits = 127
+for i in range(nbits + 1):
+  if i == nbits - 127 or i == nbits - 7 or i == nbits - 2 or i == nbits :
+    primitivo.append(1) 
+  else:
+    primitivo.append(0) 
+
+# Realiza la regla de horner para obtener la MAC
 for m in MsGood:
     gmac = MGF(xorear2list(gmac, m),h, primitivo) 
+# Por ultimo agrega el Nonce
+gmac = xorear2list(gmac, m)
+print("Tag: \n ", gmac)
